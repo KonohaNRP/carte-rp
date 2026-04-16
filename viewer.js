@@ -17,19 +17,7 @@ const flagsCollection = collection(db, "flags");
 let flagsData = [];
 
 
-/* 🔄 Firestore */
-onSnapshot(flagsCollection, (snapshot) => {
-  flagsData = [];
 
-  snapshot.forEach(docSnap => {
-    flagsData.push({
-      id: docSnap.id,
-      ...docSnap.data()
-    });
-  });
-
-  renderFlags();
-});
 
 /* ⏱️ Format temps */
 function formatTime(seconds) {
