@@ -110,21 +110,7 @@ function renderFlags() {
       });
     });
 
-    /* 🟡 changement de camp */
-    flag.addEventListener("click", async (event) => {
-      event.stopPropagation();
 
-      let newOwner;
-
-      if (data.owner === "neutral") newOwner = "konoha";
-      else if (data.owner === "konoha") newOwner = "suna";
-      else newOwner = "neutral";
-
-      await updateDoc(doc(db, "flags", data.id), {
-        owner: newOwner,
-        lastUpdate: Date.now()
-      });
-    });
 
 
 
