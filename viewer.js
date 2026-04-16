@@ -1,8 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-app.js";
-import { getFirestore, collection, onSnapshot } 
-from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
+import { getFirestore, collection } from "https://www.gstatic.com/firebasejs/10.0.0/firebase-firestore.js";
 
-/* 🔥 CONFIG FIREBASE */
+/* 🔥 REMPLACE ICI PAR TA CONFIG FIREBASE */
 const firebaseConfig = {
 apiKey: "AIzaSyAC6uQD2KfxIqINAwIDsTV4uEacR8iFCXg",
 authDomain: "ag---reconnaissance-drapeau.firebaseapp.com",
@@ -17,6 +16,27 @@ const flagsCollection = collection(db, "flags");
 
 let flagsData = [];
 
+/* 🟢 Ajouter un point */
+map.addEventListener("click", async (e) => {
+  const name = prompt("Nom du point ?");
+  if (!name) return;
+
+  const rect = map.getBoundingClientRect();
+
+  const x = (e.clientX - rect.left) / rect.width;
+  const y = (e.clientY - rect.top) / rect.height;
+
+  await addDoc(flagsCollection, {
+    x,
+    y,
+    name,
+    owner: "neutral",
+    lastUpdate: Date.now(),
+    captureEnd: null
+  });
+});
+
+/* 🔄 Firestore */
 onSnapshot(flagsCollection, (snapshot) => {
   flagsData = [];
 
@@ -30,7 +50,7 @@ onSnapshot(flagsCollection, (snapshot) => {
   renderFlags();
 });
 
-/* ⏱️ format */
+/* ⏱️ Format temps */
 function formatTime(seconds) {
   if (seconds < 60) return seconds + "s";
 
@@ -43,7 +63,7 @@ function formatTime(seconds) {
   return hours + "h " + remainingMinutes + "m";
 }
 
-/* 🎨 render (SANS EVENTS) */
+/* 🎨 Render */
 function renderFlags() {
   document.querySelectorAll(".flag").forEach(el => el.remove());
 
@@ -58,12 +78,21 @@ function renderFlags() {
     flag.style.left = (data.x * rect.width) + "px";
     flag.style.top = (data.y * rect.height) + "px";
 
-    /* NOM */
+    /* 🏷️ NOM */
     const label = document.createElement("div");
     label.className = "label";
     label.innerText = data.name || "";
 
-    /* CAPTURE */
+    /* 🔴 STOP BLINK */
+    label.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      await updateDoc(doc(db, "flags", data.id), {
+        captureEnd: null
+      });
+    });
+
+    /* 🔥 CAPTURE */
     const capture = document.createElement("div");
     capture.className = "capture";
 
@@ -73,6 +102,7 @@ function renderFlags() {
       if (remaining <= 0) {
         capture.innerText = "CAPTURABLE";
 
+        /* blink uniquement neutral ou suna */
         if (data.owner === "neutral" || data.owner === "suna") {
           flag.classList.add("blink");
         }
@@ -81,15 +111,64 @@ function renderFlags() {
         capture.innerText = "Capturable dans : " + formatTime(remaining);
       }
     } else {
-      capture.innerText = "Capturable : OFF";
+      capture.innerText = "Capturable dans : --";
     }
 
-    /* TIMER */
+    /* définir timer capture */
+    capture.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      const minutes = prompt("Dans combien de minutes ?");
+      if (!minutes) return;
+
+      const ms = parseInt(minutes) * 60 * 1000;
+
+      await updateDoc(doc(db, "flags", data.id), {
+        captureEnd: Date.now() + ms,
+        lastUpdate: Date.now() // reset check
+      });
+    });
+
+    /* ⏱️ TIMER */
     const timer = document.createElement("div");
     timer.className = "timer";
 
     const seconds = Math.floor((now - data.lastUpdate) / 1000);
     timer.innerText = "Dernier check : " + formatTime(seconds);
+
+    timer.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      await updateDoc(doc(db, "flags", data.id), {
+        lastUpdate: Date.now()
+      });
+    });
+
+    /* 🟡 changement de camp */
+    flag.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      let newOwner;
+
+      if (data.owner === "neutral") newOwner = "konoha";
+      else if (data.owner === "konoha") newOwner = "suna";
+      else newOwner = "neutral";
+
+      await updateDoc(doc(db, "flags", data.id), {
+        owner: newOwner,
+        lastUpdate: Date.now()
+      });
+    });
+
+    /* 🔴 suppression */
+    flag.addEventListener("contextmenu", async (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+
+      if (!confirm("Supprimer ce point ?")) return;
+
+      await deleteDoc(doc(db, "flags", data.id));
+    });
 
     flag.appendChild(label);
     flag.appendChild(capture);
@@ -99,7 +178,7 @@ function renderFlags() {
   });
 }
 
-/* refresh live */
+/* 🔄 refresh live */
 setInterval(() => {
   renderFlags();
 }, 1000);
