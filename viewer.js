@@ -17,8 +17,19 @@ const flagsCollection = collection(db, "flags");
 let flagsData = [];
 
 
+/* 🔄 Firestore */
+onSnapshot(flagsCollection, (snapshot) => {
+  flagsData = [];
 
+  snapshot.forEach(docSnap => {
+    flagsData.push({
+      id: docSnap.id,
+      ...docSnap.data()
+    });
+  });
 
+  renderFlags();
+});
 
 /* ⏱️ Format temps */
 function formatTime(seconds) {
@@ -62,7 +73,42 @@ function renderFlags() {
       });
     });
 
- 
+    /* 🔥 CAPTURE */
+    const capture = document.createElement("div");
+    capture.className = "capture";
+
+    if (data.captureEnd) {
+      const remaining = Math.floor((data.captureEnd - now) / 1000);
+
+      if (remaining <= 0) {
+        capture.innerText = "CAPTURABLE";
+
+        /* blink uniquement neutral ou suna */
+        if (data.owner === "neutral" || data.owner === "suna") {
+          flag.classList.add("blink");
+        }
+
+      } else {
+        capture.innerText = "Capturable dans : " + formatTime(remaining);
+      }
+    } else {
+      capture.innerText = "Capturable dans : --";
+    }
+
+    /* définir timer capture */
+    capture.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      const minutes = prompt("Dans combien de minutes ?");
+      if (!minutes) return;
+
+      const ms = parseInt(minutes) * 60 * 1000;
+
+      await updateDoc(doc(db, "flags", data.id), {
+        captureEnd: Date.now() + ms,
+        lastUpdate: Date.now() // reset check
+      });
+    });
 
     /* ⏱️ TIMER */
     const timer = document.createElement("div");
@@ -79,6 +125,30 @@ function renderFlags() {
       });
     });
 
+    /* 🟡 changement de camp */
+    flag.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      let newOwner;
+
+      if (data.owner === "neutral") newOwner = "konoha";
+      else if (data.owner === "konoha") newOwner = "suna";
+      else newOwner = "neutral";
+
+      await updateDoc(doc(db, "flags", data.id), {
+        owner: newOwner,
+        lastUpdate: Date.now()
+      });
+    });
+
+
+
+    flag.appendChild(label);
+    flag.appendChild(capture);
+    flag.appendChild(timer);
+
+    map.appendChild(flag);
+  });
 }
 
 /* 🔄 refresh live */
