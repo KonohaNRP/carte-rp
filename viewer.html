@@ -2,17 +2,108 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>Carte RP - Viewer</title>
+  <title>Carte RP</title>
 
-  <link rel="stylesheet" href="style.css">
+  <style>
+body {
+  background: #111;
+  color: white;
+  font-family: Arial;
+  text-align: center;
+}
+
+/* 📦 MAP */
+#map {
+  position: relative;
+  display: inline-block;
+  width: 90vw;
+  max-width: 1400px;
+  border: 2px solid white;
+}
+
+#map img {
+  width: 100%;
+  display: block;
+}
+
+/* 📍 DRAPEAU */
+.flag {
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 🎨 couleurs */
+.neutral { background: gray; }
+.konoha { background: red; }
+.suna { background: orange; }
+
+/* 🏷️ NOM */
+.flag .label {
+  position: absolute;
+  top: -60px;
+  font-size: 12px;
+  white-space: nowrap;
+  background: rgba(0,0,0,0.7);
+  padding: 3px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* 🔥 CAPTURE (AU-DESSUS) */
+.flag .capture {
+  position: absolute;
+  top: -37px;
+  font-size: 10px;
+  white-space: nowrap;
+  background: rgba(0,0,0,0.7);
+  padding: 2px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ⏱️ TIMER (DERNIER CHECK) */
+.flag .timer {
+  position: absolute;
+  top: -20px;
+  font-size: 10px;
+  white-space: nowrap;
+  background: rgba(0,0,0,0.7);
+  padding: 2px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* ✨ HOVER */
+.flag:hover {
+  transform: translate(-50%, -50%) scale(1.2);
+}
+
+/* 🔥 CLIGNOTEMENT */
+@keyframes blink {
+  0% { opacity: 1; }
+  50% { opacity: 0.2; }
+  100% { opacity: 1; }
+}
+
+.flag.blink {
+  animation: blink 1s infinite;
+}
+  </style>
 </head>
 
 <body>
 
-<h2>Carte RP (lecture seule)</h2>
+<h2>Carte RP - Drapeaux</h2>
 
 <div id="map">
-  <img src="map.png">
+  <img id="mapImg" src="map.png">
 </div>
 
 <script type="module" src="viewer.js"></script>
