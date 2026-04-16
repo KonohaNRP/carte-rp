@@ -50,7 +50,7 @@ onSnapshot(flagsCollection, (snapshot) => {
   renderFlags();
 });
 
-/* ⏱️ format temps */
+/* ⏱️ Format temps */
 function formatTime(seconds) {
   if (seconds < 60) return seconds + "s";
 
@@ -63,7 +63,7 @@ function formatTime(seconds) {
   return hours + "h " + remainingMinutes + "m";
 }
 
-/* 🎨 render */
+/* 🎨 Render */
 function renderFlags() {
   document.querySelectorAll(".flag").forEach(el => el.remove());
 
@@ -77,6 +77,72 @@ function renderFlags() {
 
     flag.style.left = (data.x * rect.width) + "px";
     flag.style.top = (data.y * rect.height) + "px";
+
+    /* 🏷️ NOM */
+    const label = document.createElement("div");
+    label.className = "label";
+    label.innerText = data.name || "";
+
+    /* 🔴 STOP BLINK */
+    label.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      await updateDoc(doc(db, "flags", data.id), {
+        captureEnd: null
+      });
+    });
+
+    /* 🔥 CAPTURE */
+    const capture = document.createElement("div");
+    capture.className = "capture";
+
+    if (data.captureEnd) {
+      const remaining = Math.floor((data.captureEnd - now) / 1000);
+
+      if (remaining <= 0) {
+        capture.innerText = "CAPTURABLE";
+
+        /* blink uniquement neutral ou suna */
+        if (data.owner === "neutral" || data.owner === "suna") {
+          flag.classList.add("blink");
+        }
+
+      } else {
+        capture.innerText = "Capturable dans : " + formatTime(remaining);
+      }
+    } else {
+      capture.innerText = "Capturable : OFF";
+    }
+
+    /* définir timer capture */
+    capture.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      const minutes = prompt("Dans combien de minutes ?");
+      if (!minutes) return;
+
+      const ms = parseInt(minutes) * 60 * 1000;
+
+      await updateDoc(doc(db, "flags", data.id), {
+        captureEnd: Date.now() + ms,
+        lastUpdate: Date.now() // reset check
+      });
+    });
+
+    /* ⏱️ TIMER */
+    const timer = document.createElement("div");
+    timer.className = "timer";
+
+    const seconds = Math.floor((now - data.lastUpdate) / 1000);
+    timer.innerText = "Dernier check : " + formatTime(seconds);
+
+    timer.addEventListener("click", async (event) => {
+      event.stopPropagation();
+
+      await updateDoc(doc(db, "flags", data.id), {
+        lastUpdate: Date.now()
+      });
+    });
 
     /* 🟡 changement de camp */
     flag.addEventListener("click", async (event) => {
@@ -104,65 +170,10 @@ function renderFlags() {
       await deleteDoc(doc(db, "flags", data.id));
     });
 
-    /* 🏷️ nom */
-    const label = document.createElement("div");
-    label.style.position = "absolute";
-    label.style.top = "-40px";
-    label.style.fontSize = "12px";
-    label.innerText = data.name || "";
-
-    /* ⏱️ timer normal */
-    const timer = document.createElement("div");
-    timer.className = "timer";
-
-    const seconds = Math.floor((now - data.lastUpdate) / 1000);
-    timer.innerText = formatTime(seconds);
-
-    timer.addEventListener("click", async (event) => {
-      event.stopPropagation();
-
-      await updateDoc(doc(db, "flags", data.id), {
-        lastUpdate: Date.now()
-      });
-    });
-
-    /* 🔥 CAPTURE TIMER */
-    const capture = document.createElement("div");
-    capture.style.fontSize = "10px";
-    capture.style.marginTop = "2px";
-
-    if (data.captureEnd) {
-      const remaining = Math.floor((data.captureEnd - now) / 1000);
-
-      if (remaining <= 0) {
-        capture.innerText = "CAPTURABLE";
-
-        /* 💥 clignotement */
-        flag.classList.add("blink");
-      } else {
-        capture.innerText = "Capturable dans: " + formatTime(remaining);
-      }
-    } else {
-      capture.innerText = "Capturable : OFF";
-    }
-
-    /* 🖱️ clic pour définir timer */
-    capture.addEventListener("click", async (event) => {
-      event.stopPropagation();
-
-      const minutes = prompt("Dans combien de minutes ?");
-      if (!minutes) return;
-
-      const ms = parseInt(minutes) * 60 * 1000;
-
-      await updateDoc(doc(db, "flags", data.id), {
-        captureEnd: Date.now() + ms
-      });
-    });
-
     flag.appendChild(label);
-    flag.appendChild(timer);
     flag.appendChild(capture);
+    flag.appendChild(timer);
+
     map.appendChild(flag);
   });
 }

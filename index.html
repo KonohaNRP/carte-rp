@@ -35,48 +35,48 @@ body {
   transform: translate(-50%, -50%);
   cursor: pointer;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  pointer-events: auto;
+  justify-content: center;
 }
 
 /* 🎨 couleurs */
 .neutral { background: gray; }
-.konoha { background: blue; }
+.konoha { background: red; }
 .suna { background: orange; }
 
 /* 🏷️ NOM */
-.flag div:first-child {
+.flag .label {
   position: absolute;
-  top: -42px;
+  top: -55px;
   font-size: 12px;
   white-space: nowrap;
-  background: rgba(0,0,0,0.6);
-  padding: 2px 6px;
+  background: rgba(0,0,0,0.7);
+  padding: 3px 6px;
   border-radius: 4px;
+  cursor: pointer;
 }
 
-/* ⏱️ TIMER */
-.timer {
+/* 🔥 CAPTURE (AU-DESSUS) */
+.flag .capture {
   position: absolute;
-  top: -20px;
+  top: -35px;
   font-size: 10px;
-  background: rgba(0,0,0,0.6);
-  padding: 2px 4px;
-  border-radius: 4px;
   white-space: nowrap;
-  pointer-events: auto;
+  background: rgba(0,0,0,0.7);
+  padding: 2px 5px;
+  border-radius: 4px;
+  cursor: pointer;
 }
 
-/* 🔥 CAPTURE TIMER */
-.flag div:last-child {
+/* ⏱️ TIMER (DERNIER CHECK) */
+.flag .timer {
   position: absolute;
-  top: 20px;
+  top: 25px;
   font-size: 10px;
-  background: rgba(0,0,0,0.6);
-  padding: 2px 4px;
-  border-radius: 4px;
   white-space: nowrap;
+  background: rgba(0,0,0,0.7);
+  padding: 2px 5px;
+  border-radius: 4px;
   cursor: pointer;
 }
 
@@ -92,7 +92,6 @@ body {
   100% { opacity: 1; }
 }
 
-/* utilisé quand capturable */
 .flag.blink {
   animation: blink 1s infinite;
 }
