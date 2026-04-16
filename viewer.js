@@ -95,21 +95,6 @@ function renderFlags() {
       capture.innerText = "Capturable dans : --";
     }
 
-    /* définir timer capture */
-    capture.addEventListener("click", async (event) => {
-      event.stopPropagation();
-
-      const minutes = prompt("Dans combien de minutes ?");
-      if (!minutes) return;
-
-      const ms = parseInt(minutes) * 60 * 1000;
-
-      await updateDoc(doc(db, "flags", data.id), {
-        captureEnd: Date.now() + ms,
-        lastUpdate: Date.now() // reset check
-      });
-    });
-
     /* ⏱️ TIMER */
     const timer = document.createElement("div");
     timer.className = "timer";
