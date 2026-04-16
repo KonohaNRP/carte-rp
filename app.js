@@ -12,10 +12,11 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 const map = document.getElementById("map");
-const mapImg = document.getElementById("mapImg");
 const flagsCollection = collection(db, "flags");
 
-const CONFIRMATION_DELAY = 5 * 60 * 1000;
+const CONFIRMATION_DELAY = 5 * 60 * 1000; // 5 min
+
+let flagsData = [];
 
 /* 🟢 Ajouter un drapeau */
 map.addEventListener("click", async (e) => {
@@ -28,32 +29,39 @@ map.addEventListener("click", async (e) => {
     x,
     y,
     owner: "neutral",
-    timerEnd: 0,
     lastUpdate: Date.now()
   });
 });
 
-/* 🔄 Affichage temps réel */
+/* 🔄 Écoute Firestore */
 onSnapshot(flagsCollection, (snapshot) => {
+  flagsData = [];
 
+  snapshot.forEach(docSnap => {
+    flagsData.push({
+      id: docSnap.id,
+      ...docSnap.data()
+    });
+  });
+
+  renderFlags();
+});
+
+/* 🔄 rendu + timer live */
+function renderFlags() {
   document.querySelectorAll(".flag").forEach(el => el.remove());
 
   const rect = map.getBoundingClientRect();
   const now = Date.now();
 
-  snapshot.forEach(docSnap => {
-
-    const data = docSnap.data();
+  flagsData.forEach(data => {
 
     let displayOwner = data.owner;
 
-    /* 🔴 état "à confirmer" */
-    if (!data.timerEnd || data.timerEnd < now) {
-      const timeSince = now - data.lastUpdate;
+    const timeSince = now - data.lastUpdate;
 
-      if (timeSince > CONFIRMATION_DELAY) {
-        displayOwner = "a_confirmer";
-      }
+    if (timeSince > CONFIRMATION_DELAY) {
+      displayOwner = "a_confirmer";
     }
 
     const flag = document.createElement("div");
@@ -62,7 +70,7 @@ onSnapshot(flagsCollection, (snapshot) => {
     flag.style.left = (data.x * rect.width) + "px";
     flag.style.top = (data.y * rect.height) + "px";
 
-    /* 🟡 clic gauche = changer camp */
+    /* 🟡 clic gauche → changer camp */
     flag.addEventListener("click", async (event) => {
       event.stopPropagation();
 
@@ -72,35 +80,44 @@ onSnapshot(flagsCollection, (snapshot) => {
       else if (data.owner === "konoha") newOwner = "suna";
       else newOwner = "neutral";
 
-      await updateDoc(doc(db, "flags", docSnap.id), {
+      await updateDoc(doc(db, "flags", data.id), {
         owner: newOwner,
-        timerEnd: Date.now() + 60000,
         lastUpdate: Date.now()
       });
     });
 
-    /* 🔴 clic droit = supprimer */
+    /* 🔴 clic droit → supprimer */
     flag.addEventListener("contextmenu", async (event) => {
       event.preventDefault();
 
       const confirmDelete = confirm("Supprimer ce drapeau ?");
       if (!confirmDelete) return;
 
-      await deleteDoc(doc(db, "flags", docSnap.id));
+      await deleteDoc(doc(db, "flags", data.id));
     });
 
-    /* ⏱️ timer */
-    if (data.timerEnd && data.timerEnd > now) {
-      const timer = document.createElement("div");
-      timer.className = "timer";
+    /* ⏱️ compteur */
+    const timer = document.createElement("div");
+    timer.className = "timer";
 
-      const seconds = Math.floor((data.timerEnd - now) / 1000);
-      timer.innerText = seconds + "s";
+    const seconds = Math.floor(timeSince / 1000);
+    timer.innerText = seconds + "s";
 
-      flag.appendChild(timer);
-    }
+    /* 🔄 reset compteur */
+    timer.addEventListener("click", async (event) => {
+      event.stopPropagation();
 
+      await updateDoc(doc(db, "flags", data.id), {
+        lastUpdate: Date.now()
+      });
+    });
+
+    flag.appendChild(timer);
     map.appendChild(flag);
   });
+}
 
-});
+/* 🔥 timer live (update toutes les secondes) */
+setInterval(() => {
+  renderFlags();
+}, 1000);
