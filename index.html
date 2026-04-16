@@ -15,11 +15,13 @@
     #map {
       position: relative;
       display: inline-block;
+      width: 90vw;
+      max-width: 1400px;
       border: 2px solid white;
     }
 
     #map img {
-      width: 800px;
+      width: 100%;
       display: block;
     }
 
@@ -60,7 +62,7 @@
 <h2>Carte RP - Drapeaux</h2>
 
 <div id="map">
-  <img src="map.png" alt="Carte">
+  <img id="mapImg" src="map.png">
 </div>
 
 <script type="module" src="app.js"></script>
