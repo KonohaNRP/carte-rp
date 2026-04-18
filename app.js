@@ -103,9 +103,9 @@ function renderFlags() {
         capture.innerText = "CAPTURABLE";
 
         /* blink uniquement neutral ou suna */
-       /* if (data.owner === "neutral" || data.owner === "suna") {
-       /*   flag.classList.add("blink");
-      /*  }
+      /*  if (data.owner === "neutral" || data.owner === "suna") {
+          flag.classList.add("blink");
+        }*/
 
       } else {
         capture.innerText = "Capturable dans : " + formatTime(remaining);
